@@ -1,7 +1,8 @@
 Capistrano::Configuration.instance.load do
   namespace :base do
-    task :info do
-      run "hostname"
+    task :setup do
+      init_deploy_user
+      install
     end
     
     desc "Init environment for deployment user"
@@ -21,7 +22,7 @@ Capistrano::Configuration.instance.load do
       run "rm /tmp/id_rsa.pub"
     end
 
-    desc "Install everything onto the server"
+    desc "Install minimum prerequisites for app_maint"
     task :install do
       if run "which ruby >/dev/null"
         run "#{sudo} apt-get -y update"
@@ -38,6 +39,6 @@ Capistrano::Configuration.instance.load do
         run "#{sudo} gem install chef ruby-shadow --no-ri --no-rdoc"
       end
     end
-    after "deploy:install", "base:install"
+    before "deploy:setup", "base:setup"
   end
 end
