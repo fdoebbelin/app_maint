@@ -3,6 +3,22 @@ Capistrano::Configuration.instance.load do
     task :info do
       run "hostname"
     end
+    
+    task :deploy_user do
+      set :deploy_user, "#{user}"
+      set :user, "#{sudo_user}"
+      unless capture( "cat /etc/passwd | grep #{deploy_user} | wc -l" ).to_i == 0
+        run "#{sudo} deluser deployer"
+        run "#{sudo} delgroup admin"
+        run "#{sudo} rm -rf /home/deployer"
+      end
+      run "#{sudo} addgroup admin"
+      run "#{sudo} useradd deployer -m -s /bin/bash -g admin"
+      upload "#{Dir.home}/.ssh/id_rsa.pub", "/tmp/id_rsa.pub"
+      run "#{sudo} mkdir -p /home/#{deploy_user}/.ssh"
+      run "echo \"cat /tmp/id_rsa.pub >> /home/#{deploy_user}/.ssh/authorized_keys\" | sudo -s"
+      run "rm /tmp/id_rsa.pub"
+    end
 
     desc "Install everything onto the server"
     task :install do
