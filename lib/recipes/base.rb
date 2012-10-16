@@ -4,7 +4,8 @@ Capistrano::Configuration.instance.load do
       run "hostname"
     end
     
-    task :deploy_user do
+    desc "Init environment for deployment user"
+    task :init_deploy_user do
       set :deploy_user, "#{user}"
       set :user, "#{sudo_user}"
       unless capture( "cat /etc/passwd | grep #{deploy_user} | wc -l" ).to_i == 0
