@@ -1,5 +1,6 @@
 Capistrano::Configuration.instance.load do
   namespace :base do
+    desc "Prepare system for deployment"
     task :setup do
       init_deploy_user
       install
