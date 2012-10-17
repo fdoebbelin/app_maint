@@ -4,7 +4,7 @@ Capistrano::Configuration.instance.load do
     task :setup, roles: :web do
       run "mkdir -p /home/deployer/repos/#{application}.git"
       run "cd /home/deployer/repos/#{application}.git && git --bare init"
-      run_locally "git remote add origin ssh://#{user}@#{host_name}/home/deployer/repos/#{application}.git"
+      run_locally "git remote add #{remote} ssh://#{user}@#{host_name}/home/deployer/repos/#{application}.git"
     end
     after "deploy:setup", "git:setup"
   end
