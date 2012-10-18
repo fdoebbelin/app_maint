@@ -15,6 +15,7 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency "rake"  
   gem.add_dependency "capistrano"
   gem.add_dependency "capistrano-ext"
+  gem.add_dependency "json"
   
   gem.files         = `git ls-files`.split($/)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
