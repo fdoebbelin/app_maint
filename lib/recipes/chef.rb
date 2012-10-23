@@ -4,6 +4,7 @@ Capistrano::Configuration.instance.load do
   namespace :chef do
     desc "Manages all system dependencies for this application"
     task :manages, roles: :web do
+      run "mkdir -p /home/#{user}/apps/#{application}/shared"
       chef_cookbook_path = 
         capture( %q{ruby -e 'require "server_maint"; puts ServerMaint::get_cookbook_path'} ).chomp
       app_cookbook_path = "/home/#{user}/apps/#{application}/shared/cookbooks"
