@@ -20,7 +20,7 @@ Capistrano::Configuration.instance.load do
       put node_config,  "/home/#{user}/apps/#{application}/shared/node.json"
       upload(
         "#{cookbooks}",
-        "/home/#{user}/apps/#{application}/shared/cookbooks",
+        "/home/#{user}/apps/#{application}/shared/",
         {:recursive => true, :via => :scp}
       )
       run [
