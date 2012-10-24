@@ -4,6 +4,7 @@ Capistrano::Configuration.instance.load do
     task :setup do
       init_deploy_user
       install
+      pam_ssh_agent_auth
     end
     
     desc "Init environment for deployment user"
@@ -36,6 +37,27 @@ Capistrano::Configuration.instance.load do
           run "#{sudo} gem install chef ruby-shadow --no-ri --no-rdoc"
           run "#{sudo} gem install server_maint --no-ri --no-rdoc"
         end
+      end
+    end
+    desc "Make shared keys and sudo work together"
+    task :pam_ssh_agent_auth do
+      with_user "#{sudo_user}" do
+        run "#{sudo} apt-get -y install libpam0g-dev checkinstall"
+        run "wget http://downloads.sourceforge.net/project/pamsshagentauth/pam_ssh_agent_auth/v0.9.4/pam_ssh_agent_auth-0.9.4.tar.bz2"
+        run "tar -xjf pam_ssh_agent_auth-0.9.4.tar.bz2"
+        run "cd pam_ssh_agent_auth-0.9.4 && ./configure --libexecdir=/lib/security --with-mantype=man && make && #{sudo} checkinstall --default"
+        pam_config = [
+          '#%PAM-1.0',
+          'auth sufficient pam_ssh_agent_auth.so file=%h/.ssh/authorized_keys',
+          '@include common-account',
+          'session required pam_permit.so',
+          'session required pam_limits.so'
+        ].join( "\n" )
+        put(
+          pam_config,
+          "/tmp/pam_config"
+        )
+        run "#{sudo} mv /tmp/pam_config /etc/pam.d/sudo"
       end
     end
     before "deploy:setup", "base:setup"

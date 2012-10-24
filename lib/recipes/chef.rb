@@ -24,7 +24,7 @@ Capistrano::Configuration.instance.load do
         {:recursive => true, :via => :scp}
       )
       run [
-        "chef-solo",
+        "#{sudo} chef-solo",
         "-c /home/#{user}/apps/#{application}/shared/solo.rb",
         "-L /home/#{user}/apps/#{application}/shared/log/chef.log",
         "1>/dev/null"
