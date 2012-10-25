@@ -3,7 +3,8 @@ Capistrano::Configuration.instance.load do
     desc "Prepare system for deployment"
     task :setup do
       init_deploy_user
-      install
+      install_packages
+      install_ruby
       pam_ssh_agent_auth
     end
     
@@ -22,44 +23,67 @@ Capistrano::Configuration.instance.load do
       end
     end
 
-    desc "Install minimum prerequisites for app_maint"
-    task :install do
+    desc "Installs the necessary OS packages"
+    task :install_packages do
       with_user "#{sudo_user}" do
-        if capture( "which ruby  | wc -l" ).to_i == 0
-          run "#{sudo} apt-get -y update"
-          run "#{sudo} apt-get -y install python-software-properties"
-          run "#{sudo} apt-get -y install curl git-core"
-          run "#{sudo} apt-get -y install build-essential zlib1g-dev libssl-dev libreadline6-dev libyaml-dev"
-          run "wget ftp://ftp.ruby-lang.org/pub/ruby/1.9/ruby-1.9.3-p194.tar.gz"
-          run "tar -xvzf ruby-1.9.3-p194.tar.gz"
-          run "cd ruby-1.9.3-p194/ && ./configure --prefix=/usr/local && make && #{sudo} make install"
+        run "#{sudo} apt-get -y update"
+        run "#{sudo} apt-get -y install python-software-properties"
+        run "#{sudo} apt-get -y install curl git-core"
+        run "#{sudo} apt-get -y install build-essential zlib1g-dev libssl-dev libreadline6-dev libyaml-dev"
+        run "#{sudo} apt-get -y install libpam0g-dev checkinstall"
+      end
+    end
+
+    desc "Installs up-to-date ruby version from sources"
+    task :install_ruby do
+      version = '1.9.3'
+      patch = 'p286'
+      with_user "#{sudo_user}" do
+        if capture( "dpkg --list ruby-#{version} 2>&1 | grep 'No packages found' | wc -l" ).to_i == 1
+          run [
+            "wget ftp://ftp.ruby-lang.org/pub/ruby/1.9/ruby-#{version}-#{patch}.tar.gz --quiet",
+            "tar -xzf ruby-#{version}-#{patch}.tar.gz",
+            "cd ruby-#{version}-#{patch}/",
+            "./configure --prefix=/usr/local 1>/dev/null",
+            "make 1>/dev/null 2>&1",
+            "#{sudo} checkinstall --default --pkgversion=#{version} --nodoc"
+          ].join( '&&' )
           run "#{sudo} gem install bundler --no-ri --no-rdoc"
           run "#{sudo} gem install chef ruby-shadow --no-ri --no-rdoc"
           run "#{sudo} gem install server_maint --no-ri --no-rdoc"
         end
       end
     end
+
     desc "Make shared keys and sudo work together"
     task :pam_ssh_agent_auth do
+      version = '0.9.4'
       with_user "#{sudo_user}" do
-        run "#{sudo} apt-get -y install libpam0g-dev checkinstall"
-        run "wget http://downloads.sourceforge.net/project/pamsshagentauth/pam_ssh_agent_auth/v0.9.4/pam_ssh_agent_auth-0.9.4.tar.bz2"
-        run "tar -xjf pam_ssh_agent_auth-0.9.4.tar.bz2"
-        run "cd pam_ssh_agent_auth-0.9.4 && ./configure --libexecdir=/lib/security --with-mantype=man && make && #{sudo} checkinstall --default"
-        pam_config = [
-          '#%PAM-1.0',
-          'auth sufficient pam_ssh_agent_auth.so file=%h/.ssh/authorized_keys',
-          '@include common-account',
-          'session required pam_permit.so',
-          'session required pam_limits.so'
-        ].join( "\n" )
-        put(
-          pam_config,
-          "/tmp/pam_config"
-        )
-        run "#{sudo} mv /tmp/pam_config /etc/pam.d/sudo"
+        if capture( "dpkg --list pam-ssh-agent-auth 2>&1 | grep 'No packages found' | wc -l" ).to_i == 1
+          run [
+            "wget http://downloads.sourceforge.net/project/pamsshagentauth/pam_ssh_agent_auth/v#{version}/pam_ssh_agent_auth-#{version}.tar.bz2 --quiet",
+            "tar -xjf pam_ssh_agent_auth-#{version}.tar.bz2",
+            "cd pam_ssh_agent_auth-#{version}",
+            "./configure --libexecdir=/lib/security --with-mantype=man 1>/dev/null",
+            "make 1>/dev/null 2>&1",
+            "#{sudo} checkinstall --default --nodoc"
+          ].join( '&&' )
+          pam_config = [
+            '#%PAM-1.0',
+            'auth sufficient pam_ssh_agent_auth.so file=%h/.ssh/authorized_keys',
+            '@include common-account',
+            'session required pam_permit.so',
+            'session required pam_limits.so'
+          ].join( "\n" )
+          put(
+            pam_config,
+            "/tmp/pam_config"
+          )
+          run "#{sudo} mv /tmp/pam_config /etc/pam.d/sudo"
+        end
       end
     end
+
     before "deploy:setup", "base:setup"
   end
 end
