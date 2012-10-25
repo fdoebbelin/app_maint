@@ -16,8 +16,15 @@ Capistrano::Configuration.instance.load do
         chef_config,
         "/home/#{user}/apps/#{application}/shared/solo.rb"
       )
-      node_config = { "run_list" => ["recipe[main]"] }.to_json
-      put node_config,  "/home/#{user}/apps/#{application}/shared/node.json"
+      node_config = {
+        "user" => "#{user}",
+        "application" => "#{application}",
+        "server_name" => "#{host_name}", 
+        "run_list" => ["recipe[main]"] 
+      }
+      node_config.update( app_node_config ) if defined? :app_node_config
+      node_config.update( stage_node_config ) if defined? :stage_node_config
+      put node_config.to_json,  "/home/#{user}/apps/#{application}/shared/node.json"
       upload(
         "#{cookbooks}",
         "/home/#{user}/apps/#{application}/shared/",
