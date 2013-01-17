@@ -5,7 +5,9 @@ Capistrano::Configuration.instance.load do
       run "mkdir -p /home/deployer/repos/#{application}.git"
       run "cd /home/deployer/repos/#{application}.git && git --bare init"
       run_locally "git init"
-      run_locally "git remote add #{remote} ssh://#{user}@#{host_name}/home/deployer/repos/#{application}.git"
+      if `git config --get remote.#{remote}.url` == ''
+        run_locally "git remote add #{remote} ssh://#{user}@#{host_name}/home/deployer/repos/#{application}.git"
+      end
     end
 
     after "deploy:setup", "git:setup"

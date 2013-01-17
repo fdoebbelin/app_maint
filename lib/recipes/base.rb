@@ -27,11 +27,11 @@ Capistrano::Configuration.instance.load do
     desc "Installs the necessary OS packages"
     task :install_packages do
       with_user "#{sudo_user}" do
-        run "#{sudo} apt-get -y update"
-        run "#{sudo} apt-get -y install python-software-properties"
-        run "#{sudo} apt-get -y install curl git-core"
-        run "#{sudo} apt-get -y install build-essential zlib1g-dev libssl-dev libreadline6-dev libyaml-dev"
-        run "#{sudo} apt-get -y install libpam0g-dev checkinstall"
+        run "#{sudo} apt-get -y update 1>/dev/null"
+        run "#{sudo} apt-get -y install python-software-properties 1>/dev/null"
+        run "#{sudo} apt-get -y install curl git-core 1>/dev/null"
+        run "#{sudo} apt-get -y install build-essential zlib1g-dev libssl-dev libreadline6-dev libyaml-dev 1>/dev/null"
+        run "#{sudo} apt-get -y install libpam0g-dev checkinstall 1>/dev/null"
       end
     end
 
