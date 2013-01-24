@@ -19,7 +19,9 @@ Capistrano::Configuration.instance.load do
       with_user "#{sudo_user}" do
         if capture( "#{sudo} cat /etc/passwd | grep #{deploy_user} | wc -l" ).to_i == 0
           run "#{sudo} addgroup admin"
-          run "#{sudo} useradd #{deploy_user} -m -s /bin/bash -g admin"
+          if capture( "cat /etc/group | grep '^admin:' | wc -l" ).to_1 == 0
+            run "#{sudo} useradd #{deploy_user} -m -s /bin/bash -g admin"
+          end
           upload "#{Dir.home}/.ssh/id_rsa.pub", "/tmp/id_rsa.pub"
           run "#{sudo} mkdir -p /home/#{deploy_user}/.ssh"
           run "echo \"cat /tmp/id_rsa.pub >> /home/#{deploy_user}/.ssh/authorized_keys\" | sudo -s"
