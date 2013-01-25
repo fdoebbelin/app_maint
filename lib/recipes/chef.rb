@@ -22,8 +22,8 @@ Capistrano::Configuration.instance.load do
         "server_name" => "#{host_name}",
         "run_list" => ["recipe[main]"]
       }
-      node_config.update( app_node_config ) if defined? app_node_config
-      node_config.update( stage_node_config ) if defined? stage_node_config
+      node_config.update( app_node_config ) if exists? :app_node_config
+      node_config.update( stage_node_config ) if exists? :stage_node_config
       put node_config.to_json,  "/home/#{user}/chef/#{application}/node.json"
       upload(
         "#{cookbooks}",
