@@ -60,7 +60,8 @@ Capistrano::Configuration.instance.load do
             "#{sudo} checkinstall --default --pkgname=ruby-#{version}#{patch} --pkgversion=#{version}#{patch} --nodoc 1>/dev/null 2>&1"
           ].join( '&&' )
           run "#{sudo} gem install bundler --no-ri --no-rdoc"
-          run "#{sudo} gem install chef ruby-shadow right_aws --no-ri --no-rdoc"
+          run "#{sudo} gem install chef --version '~> 10.0' --no-ri --no-rdoc"
+          run "#{sudo} gem install ruby-shadow right_aws --no-ri --no-rdoc"
           run "#{sudo} gem install server_maint --no-ri --no-rdoc"
         end
       end
