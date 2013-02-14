@@ -1,5 +1,7 @@
 Capistrano::Configuration.instance.load do
   namespace :unicorn do
+    with_unicorn = (exists? :unicorn_workers) ? true : false
+
     desc "Setup Unicorn initializer and app configuration"
     task :setup, roles: :app do
       run "mkdir -p #{shared_path}/config"
@@ -9,14 +11,14 @@ Capistrano::Configuration.instance.load do
       run "#{sudo} mv /tmp/unicorn_init /etc/init.d/unicorn_#{application}"
       run "#{sudo} update-rc.d -f unicorn_#{application} defaults 1>/dev/null"
     end
-    after "deploy:setup", "unicorn:setup"
+    after "deploy:setup", "unicorn:setup" if with_unicorn
 
     %w[start stop restart].each do |command|
       desc "#{command} unicorn"
       task command, roles: :app do
         run "service unicorn_#{application} #{command}"
       end
-      after "deploy:#{command}", "unicorn:#{command}"
+      after "deploy:#{command}", "unicorn:#{command}" if with_unicorn
     end
   end
 end
